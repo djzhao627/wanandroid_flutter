@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app/http/api.dart';
+import 'package:flutter_app/ui/page/web_view_page.dart';
 import 'package:flutter_app/widget/article_item.dart';
 import 'package:flutter_app/widget/banner_item.dart';
 
@@ -80,21 +81,38 @@ class _ArticlePageState extends State<ArticlePage> {
 
   _buildItem(int index) {
     if (index == 0) {
-      List<Widget> list = banners
-          .map((item) => Image.network(
-                item["imagePath"],
-                fit: BoxFit.cover,
-              ))
-          .toList();
-      return Container(
-        /// 设置高度为屏幕高度 * 0.3
-        height: MediaQuery.of(context).size.height * 0.3,
-        child: BannerItem(list),
-      );
+      return _bannerView();
     }
 
     var article = articles[index - 1];
     return ArticleItem(article);
+  }
+
+  Widget _bannerView() {
+    List<Widget> list = banners
+        .map(
+          (item) => InkWell(
+            // 水波纹效果
+            child: Image.network(
+              item["imagePath"],
+              fit: BoxFit.cover,
+            ),
+            onTap: () async {
+              await Navigator.of(context)
+                  .push(MaterialPageRoute(builder: (context) {
+                return WebViewPage(
+                  viewData: item,
+                );
+              }));
+            },
+          ),
+        )
+        .toList();
+    return Container(
+      /// 设置高度为屏幕高度 * 0.3
+      height: MediaQuery.of(context).size.height * 0.3,
+      child: BannerItem(list),
+    );
   }
 
   /// 初始化当前页面的数据，同步方法
