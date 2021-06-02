@@ -1,10 +1,18 @@
+import 'dart:io';
+
+import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
+import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:flutter_app/http/api.dart';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 
 class HttpManager {
   Dio _dio;
 
   static HttpManager _instance;
+
+  PersistCookieJar _persistCookieJar;
 
   factory HttpManager.getInstance() {
     if (_instance == null) {
@@ -18,17 +26,33 @@ class HttpManager {
     BaseOptions options = BaseOptions(
         baseUrl: Api.BASE_URL,
         connectTimeout: 10000,
-        receiveTimeout: 10000);
+        receiveTimeout: 10000,
+        sendTimeout: 10000);
     _dio = Dio(options);
+    _initDio();
   }
 
-  request(url, {String method = "get"}) async {
+  void _initDio() async {
+    Directory directory = await getApplicationDocumentsDirectory();
+    var path = Directory(join(directory.path, "cookie")).path;
+    _persistCookieJar = PersistCookieJar(storage: FileStorage(path));
+    _dio.interceptors.add(CookieManager(_persistCookieJar));
+  }
+
+  request(url, {String method = "get", data}) async {
     try {
       Options options = Options(method: method);
-      Response response = await _dio.request(url, options: options);
+      Response response = await _dio.request(url, data: data, options: options);
+      print(response.headers);
+      print(response.data);
       return response.data;
     } catch (e) {
+      print(e);
       return null;
     }
+  }
+
+  void clearUserCookie() {
+    _persistCookieJar.deleteAll();
   }
 }
