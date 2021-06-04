@@ -8,6 +8,7 @@ import 'package:flutter_app/manager/app_manager.dart';
 import 'package:flutter_app/ui/page/web_view_page.dart';
 import 'package:flutter_app/widget/article_item.dart';
 import 'package:flutter_app/widget/banner_item.dart';
+import 'package:flutter_app/widget/main_drawer.dart';
 
 class ArticlePage extends StatefulWidget {
   @override
@@ -92,27 +93,28 @@ class _ArticlePageState extends State<ArticlePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Offstage(
-          offstage: _isHideLoading,
-          child: Center(
-            child: CircularProgressIndicator(),
-          ),
-        ),
-        Offstage(
-            offstage: !_isHideLoading,
-            child: RefreshIndicator(
-                onRefresh: _initAllData,
-                child: ListView.builder(
-                  itemBuilder: (context, index) => _buildItem(index),
+    return Scaffold(
+        appBar: AppBar(
+            title: Text("文章", style: const TextStyle(color: Colors.white))),
+        drawer: Drawer(child: MainDrawer()),
+        body: Stack(children: [
+          Offstage(
+              offstage: _isHideLoading,
+              child: Center(
+                child: CircularProgressIndicator(),
+              )),
+          Offstage(
+              offstage: !_isHideLoading,
+              child: RefreshIndicator(
+                  onRefresh: _initAllData,
+                  child: ListView.builder(
+                    itemBuilder: (context, index) => _buildItem(index),
 
-                  /// 多出来的一条记录给Banner使用
-                  itemCount: articles.length + 1,
-                  controller: _controller,
-                )))
-      ],
-    );
+                    /// 多出来的一条记录给Banner使用
+                    itemCount: articles.length + 1,
+                    controller: _controller,
+                  )))
+        ]));
   }
 
   _buildItem(int index) {
