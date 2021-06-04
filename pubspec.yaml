@@ -39,6 +39,7 @@ dependencies:
   shared_preferences: ^2.0.6
   cookie_jar: ^3.0.1
   path: ^1.8.0
+  flutter_slidable: ^0.6.0
 
 dev_dependencies:
   flutter_test:
@@ -72,7 +73,10 @@ flutter:
   # "family" key with the font family name, and a "fonts" key with a
   # list giving the asset and other descriptors for the font. For
   # example:
-  # fonts:
+  fonts:
+    - family: iconfont
+      fonts:
+        - asset: assets/fonts/iconfont.ttf
   #   - family: Schyler
   #     fonts:
   #       - asset: fonts/Schyler-Regular.ttf

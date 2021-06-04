@@ -1,4 +1,5 @@
 import 'package:event_bus/event_bus.dart';
+import 'package:flutter_app/http/api.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AppManager {
@@ -7,6 +8,11 @@ class AppManager {
   static SharedPreferences sharedPreferences;
 
   static initApp() async {
+    await Api.init();
     sharedPreferences = await SharedPreferences.getInstance();
+  }
+
+  static isLogin() {
+    return sharedPreferences.getString(ACCOUNT) != null;
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_app/manager/app_manager.dart';
 import 'package:flutter_app/ui/page/web_view_page.dart';
 
 class ArticleItem extends StatelessWidget {
@@ -20,7 +21,7 @@ class ArticleItem extends StatelessWidget {
                 style: TextStyle(color: Theme.of(context).primaryColor))
           ])),
         ),
-        Text(_itemData["niceShareDate"])
+        Text(_itemData["niceDate"])
       ],
     );
 
@@ -57,15 +58,14 @@ class ArticleItem extends StatelessWidget {
     );
 
     return Card(
-      elevation: 4,
-      child: InkWell(
-        child: column,
-        onTap: () async {
-          await Navigator.push(context, MaterialPageRoute(builder: (context) {
-            return WebViewPage(viewData: _itemData);
-          }));
-        },
-      ),
-    );
+        elevation: 4,
+        child: InkWell(
+            child: column,
+            onTap: () async {
+              await Navigator.push(context,
+                  MaterialPageRoute(builder: (context) {
+                return WebViewPage(viewData: _itemData, canCollect: AppManager.isLogin());
+              }));
+            }));
   }
 }

@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/event/collection_change_event.dart';
+import 'package:flutter_app/http/api.dart';
+import 'package:flutter_app/manager/app_manager.dart';
+import 'package:flutter_app/ui/page/login_page.dart';
 import 'package:flutter_webview_plugin/flutter_webview_plugin.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class WebViewPage extends StatefulWidget {
   final viewData;
 
-  const WebViewPage({Key key, this.viewData}) : super(key: key);
+  bool canCollect = false;
+
+  WebViewPage({Key key, this.viewData, this.canCollect = false})
+      : super(key: key);
 
   @override
   _WebViewPageState createState() => _WebViewPageState();
@@ -57,12 +64,21 @@ class _WebViewPageState extends State<WebViewPage> {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint("viewData:${widget.viewData}");
+    debugPrint("webViewData:${widget.viewData}");
     String url = widget.viewData["link"] ?? widget.viewData["url"];
+    bool hasCollect = widget.viewData["collect"] ?? false;
     return WebviewScaffold(
       url: url,
       appBar: AppBar(
         title: Text(widget.viewData["title"]),
+        actions: [
+          Offstage(
+              offstage: !widget.canCollect,
+              child: IconButton(
+                  icon: Icon(Icons.favorite,
+                      color: hasCollect ? Colors.red : Colors.grey),
+                  onPressed: _collect))
+        ],
         bottom: PreferredSize(
           preferredSize: !isLoading
               ? const Size.fromHeight(0.0)
@@ -77,5 +93,31 @@ class _WebViewPageState extends State<WebViewPage> {
       withZoom: true,
       debuggingEnabled: true,
     );
+  }
+
+  _collect() async {
+    if (!AppManager.isLogin()) {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => LoginPage()));
+      return;
+    }
+    var result;
+    bool hasCollect = widget.viewData["collect"] ?? false;
+    if (hasCollect) {
+      result = await Api.unCollectArticle(widget.viewData["id"]);
+    } else {
+      result = await Api.collectArticle(widget.viewData["id"]);
+    }
+    if (result["errorCode"] == 0) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(hasCollect ? "已取消收藏" : "收藏成功")));
+      AppManager.eventBus
+          .fire(CollectionChangeEvent(widget.viewData["id"], !hasCollect));
+      setState(() {
+        widget.viewData["collect"] = !hasCollect;
+      });
+    } else {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(result["errorMsg"])));
+    }
   }
 }

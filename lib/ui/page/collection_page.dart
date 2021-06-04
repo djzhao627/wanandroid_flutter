@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_app/http/api.dart';
+import 'package:flutter_app/res/icons.dart';
+import 'package:flutter_app/ui/page/article_collection_page.dart';
+import 'package:flutter_app/ui/page/custom_collection_page.dart';
 
 class CollectionPage extends StatefulWidget {
   const CollectionPage({Key key}) : super(key: key);
@@ -9,35 +11,29 @@ class CollectionPage extends StatefulWidget {
 }
 
 class _CollectionPageState extends State<CollectionPage> {
-  bool _isHideLoading = false;
-  int _pageIndex = 1;
-  List _collections;
-
-  @override
-  void initState() {
-    super.initState();
-    _getCollection();
-  }
+  final tabs = ["文章", "其他"];
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(title: Text("我的收藏")),
-        body: Stack(children: [
-          Offstage(
-              offstage: _isHideLoading,
-              child: Center(child: CircularProgressIndicator())),
-          Offstage(
-              offstage: _collections?.isEmpty ?? !_isHideLoading,
-              child: Center(child: Text("您还没有任何收藏任何内容...")))
-        ]));
-  }
-
-  void _getCollection() async {
-    var result = await Api.getCollection(_pageIndex++);
-    setState(() {
-      _collections = result["datas"];
-      _isHideLoading = true;
-    });
+    return DefaultTabController(
+        length: tabs.length,
+        child: Scaffold(
+          appBar: AppBar(
+              title: Text("我的收藏"),
+              bottom: TabBar(tabs: [
+                Tab(
+                    icon: Icon(
+                  articleIcon,
+                  size: 32,
+                )),
+                Tab(
+                    icon: Icon(
+                  favorIcon,
+                  size: 32,
+                ))
+              ])),
+          body: TabBarView(
+              children: [ArticleCollectionPage(), CustomCollectionPage()]),
+        ));
   }
 }

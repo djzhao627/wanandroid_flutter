@@ -1,6 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_app/event/collection_change_event.dart';
+import 'package:flutter_app/event/login_event.dart';
+import 'package:flutter_app/event/logout_event.dart';
 import 'package:flutter_app/http/api.dart';
+import 'package:flutter_app/manager/app_manager.dart';
 import 'package:flutter_app/ui/page/web_view_page.dart';
 import 'package:flutter_app/widget/article_item.dart';
 import 'package:flutter_app/widget/banner_item.dart';
@@ -20,7 +24,7 @@ class _ArticlePageState extends State<ArticlePage> {
   bool _isHideLoading = false;
 
   /// 当前页码
-  int curPage = 1;
+  int curPage = 0;
 
   /// 总页数
   int totalPage = 0;
@@ -41,8 +45,39 @@ class _ArticlePageState extends State<ArticlePage> {
       var curScroll = _controller.position.pixels;
 
       /// 当前位置即将达到底部，并且还有更多数据时
-      if (maxScroll <= curScroll + 30) {
+      if (maxScroll <= curScroll + 30 && curPage <= totalPage) {
         _getArticleList();
+      }
+    });
+
+    AppManager.eventBus.on<LoginEvent>().listen((event) {
+      if (mounted) {
+        _initAllData();
+      }
+    });
+
+    AppManager.eventBus.on<LogoutEvent>().listen((event) {
+      if (mounted) {
+        _initAllData();
+      }
+    });
+
+    AppManager.eventBus.on<CollectionChangeEvent>().listen((event) {
+      if (mounted) {
+        banners.every((element) {
+          if (element["id"] == event.id) {
+            element["collect"] = event.collect;
+            return false;
+          }
+          return true;
+        });
+        articles.every((element) {
+          if (element["id"] == event.id) {
+            element["collect"] = event.collect;
+            return false;
+          }
+          return true;
+        });
       }
     });
 
@@ -66,15 +101,16 @@ class _ArticlePageState extends State<ArticlePage> {
           ),
         ),
         Offstage(
-          offstage: !_isHideLoading,
-          child: ListView.builder(
-            itemBuilder: (context, index) => _buildItem(index),
+            offstage: !_isHideLoading,
+            child: RefreshIndicator(
+                onRefresh: _initAllData,
+                child: ListView.builder(
+                  itemBuilder: (context, index) => _buildItem(index),
 
-            /// 多出来的一条记录给Banner使用
-            itemCount: articles.length + 1,
-            controller: _controller,
-          ),
-        )
+                  /// 多出来的一条记录给Banner使用
+                  itemCount: articles.length + 1,
+                  controller: _controller,
+                )))
       ],
     );
   }
@@ -90,8 +126,7 @@ class _ArticlePageState extends State<ArticlePage> {
 
   Widget _bannerView() {
     List<Widget> list = banners
-        .map(
-          (item) => InkWell(
+        .map((item) => InkWell(
             // 水波纹效果
             child: Image.network(
               item["imagePath"],
@@ -101,12 +136,9 @@ class _ArticlePageState extends State<ArticlePage> {
               await Navigator.of(context)
                   .push(MaterialPageRoute(builder: (context) {
                 return WebViewPage(
-                  viewData: item,
-                );
+                    viewData: item, canCollect: AppManager.isLogin());
               }));
-            },
-          ),
-        )
+            }))
         .toList();
     return Container(
       /// 设置高度为屏幕高度 * 0.3
@@ -152,7 +184,7 @@ class _ArticlePageState extends State<ArticlePage> {
       var map = data["data"];
       var datas = map["datas"];
       totalPage = map["pageCount"];
-      if (curPage++ == 1) {
+      if (curPage++ == 0) {
         articles.clear();
       }
       articles.addAll(datas);
